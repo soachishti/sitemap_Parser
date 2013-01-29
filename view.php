@@ -15,10 +15,10 @@ echo "</table>";
 
 if(isset($_GET['s']))
 {
+	$_GET['s'] = str_replace('.','-',$_GET['s']);
 	$con = sqlite_open('data/'.$_GET['s'].'.db', 0666, $error);
 	
-	
-	////Fetching Urls
+	////Fetching Urls From Database and it details such as loc, lastmod, frequency and prirorit of url.
 	
 	$sql = "SELECT * FROM urls";
 	$result = sqlite_query($con,$sql);
@@ -29,6 +29,7 @@ if(isset($_GET['s']))
 	echo 'Holding '.$count .' links';
 	
 	
+
 	$sql = "SELECT * FROM urls LIMIT ".$current * $limit.",{$limit}";	
 	echo "<table border='1'></tr>";
 	
@@ -55,8 +56,7 @@ if(isset($_GET['s']))
 	echo "</td>";
 	
 	
-	////Fetching Log
-	
+	////Fetching Log from database
 	
 	$sql = "SELECT * FROM log";
 	$result = sqlite_query($con,$sql);
@@ -91,8 +91,7 @@ if(isset($_GET['s']))
 	echo pagination($current,$possible,'s=' . $_GET['s'],'p1');
 	echo '</td>';
 	
-	////Fetching Sitemaps
-	
+	////Fetching Sitemaps from database
 	
 	$sql = "SELECT * FROM sitemap";
 	$result = sqlite_query($con,$sql);
@@ -124,15 +123,6 @@ if(isset($_GET['s']))
 	echo '</tr></table>';
 }
 
-
-
-
-
-
-
-
-
-
 function pagination($current,$possible,$get,$page,$out = '')
 {	
 	if($current <= $possible)
@@ -154,5 +144,4 @@ function pagination($current,$possible,$get,$page,$out = '')
 	}	
 	return $out;
 }
-
 ?>

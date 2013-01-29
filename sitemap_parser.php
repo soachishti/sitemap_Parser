@@ -1,8 +1,16 @@
 <?php
+
+/*======================================================================*\
+	Function:	fetch
+	Purpose:	Extract Url from Sitemap and insert into connected database
+	$con in the Global and Recursivly fetch sitemap-index
+	Input:		Sitemap Content ($data), Depth of functions ($depth) default  2 and limit of links to index
+	Output:		0 (Link and details added to database)
+\*======================================================================*/
+
 function fetch($url,$depth,$limit)
 {
-	$GLOBALS['dbname'] = $dbname = str_replace('.','-',$url);
-	$GLOBALS['limit'] = $limit;
+	$dbname = str_replace('.','-',$url);
 	$GLOBALS['dbpath'] = $dbpath = "data/{$dbname}.db";	#Location of Database Where site's sitemap stores
 	
 	# If sitemap is not fetched before so create database with name of its host.
@@ -58,18 +66,35 @@ function fetch($url,$depth,$limit)
 	
 	progress_log($con,"Downloading $url/sitemap.xml",__LINE__);
 	$data = download_curl("http://$url/sitemap.xml");
+	if($data[0] == 0 || empty($data))
+	{
+		progress_log($con,"Sitemap Doesnt exists",__LINE__);
+		return 0;
+	}
 	if(is_numeric($data) && $data < 10485760)
 	{
 		progress_log($con,"Large Sitemap $data",__LINE__);
-		exit;
+		return 0;
 	}
-	$GLOBALS['con'] = $con;
-	return sitemap($data,0,$depth);
+	$result = sitemap($data,$depth,0,$con,$limit);
+	sqlite_close($con);
+	return $result;
 }
-function sitemap($data,$sitemapid = '0',$depth = 2)
+
+/*======================================================================*\
+	END OF Function fetch
+\*======================================================================*/
+
+/*======================================================================*\
+	Function:	sitemap
+	Purpose:	Extract Url from Sitemap and insert into connected database
+				$con in the Global and Recursivly fetch sitemap-index
+	Input:		Sitemap Content ($data), Depth of functions ($depth) default  2,Sitemap Id to start From, Database link, Limit of link to index.
+	Output:		0 (Link and details added to database)
+\*======================================================================*/
+
+function sitemap($data,$depth = 2,$sitemapid = 0,$con,$limit)
 {
-	global $limit,$con,$dbname; #Get database name from global vairable.
-	
 	if ($depth == 0) {
         return 0;
     }
@@ -105,7 +130,7 @@ function sitemap($data,$sitemapid = '0',$depth = 2)
 				$query = sqlite_exec($con, $sql);
 				$sitemapid = sqlite_last_insert_rowid($con);
 				progress_log($con,"Depth".$depth - 1,__LINE__);
-				sitemap($data,$sitemapid,$depth - 1);
+				sitemap($data,$depth - 1,$sitemapid,$con,$limit);
 			}
 			else
 			{
@@ -114,7 +139,7 @@ function sitemap($data,$sitemapid = '0',$depth = 2)
 				$sitemapid = $row['id'];
 				$query = sqlite_exec($con, $sql);
 				progress_log($con,"Depth".$depth - 1,__LINE__);
-				sitemap($data,$sitemapid,$depth - 1);
+				sitemap($data,$depth - 1,$sitemapid,$con,$limit);
 			}
 		}
 	}
@@ -200,8 +225,12 @@ function sitemap($data,$sitemapid = '0',$depth = 2)
 			}
 		}
 	}
-	sqlite_close($con);
+	return 0;
 }
+
+/*======================================================================*\
+	END OF Function sitemap
+\*======================================================================*/
 
 /*======================================================================*\
 	Function:	download_curl
@@ -212,8 +241,8 @@ function sitemap($data,$sitemapid = '0',$depth = 2)
 
 function download_curl($url)
 {
-	$header = get_headers($url, 1);
-	if($header['Content-Length'] < 10485760)
+	$header = @get_headers($url, 1);
+	if($header == true && $header['Content-Length'] < 10485760)
 	{	
 		$ch = curl_init();
 	
@@ -236,11 +265,27 @@ function download_curl($url)
 	END OF Function download_curl
 \*======================================================================*/
 
+/*======================================================================*\
+	Function:	object2array
+	Purpose:	Convert Object to Array
+	Input:		Object
+	Output:		Array
+\*======================================================================*/
 
 function object2array($object) { 
 	return json_decode(json_encode($object),true); 
 } 
 
+/*======================================================================*\
+	END OF Function object2array
+\*======================================================================*/
+
+/*======================================================================*\
+	Function:	progress_log
+	Purpose:	Insert current status to database
+	Input:		Datebase Connection ($con), Status ($log), Current Line ($line), Sitemap id currently processing($sitemap_id), Current Url id($url)
+	Output:		0
+\*======================================================================*/
 
 function progress_log($con,$log,$line,$sitemap_id = NULL,$url = NULL)
 {
@@ -249,5 +294,9 @@ function progress_log($con,$log,$line,$sitemap_id = NULL,$url = NULL)
 	$query = sqlite_exec($con, $sql);
 	return 0;
 }
+
+/*======================================================================*\
+	END OF Function progress_log
+\*======================================================================*/
 
 ?>
