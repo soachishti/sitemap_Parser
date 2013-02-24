@@ -35,3 +35,7 @@ Features:
 			print_r($row);
 		}
 	?>
+	
+License:
+------------
+Sitemap_Parser uses BSD 2-Clause License.
