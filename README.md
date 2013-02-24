@@ -21,7 +21,7 @@ Features:
 **Example**
 
 	<?php
-		$url = 'infocorridor.tk';
+		$url = 'google.com';
 		$limit = 5;
 		$depth = 2;
 		fetch($url,$depth,$limit);	

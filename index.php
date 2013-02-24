@@ -2,7 +2,7 @@
 include("sitemap_parser.php");
 set_time_limit (60);
 
-$url = 'example.com'; #Website Host
+$url = 'google.com'; #Website Host
 $limit = 5; # No of url to index from a sitemap
 $depth = 2; # Depth of sitemap-index
 fetch($url,$depth,$limit); # Fetch links and put in the database
